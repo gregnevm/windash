@@ -1,2 +1,3 @@
-﻿config.json
+# Local data: API key, logs, snapshots
+config.json
 logs/

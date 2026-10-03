@@ -1,0 +1,3 @@
+# Normalize line endings; batch files must stay CRLF
+* text=auto eol=lf
+*.cmd text eol=crlf

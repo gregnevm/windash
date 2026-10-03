@@ -1,1 +1,14 @@
-﻿{"apiKey":"","model":"claude-sonnet-5-5","cpu":90,"ram":90,"disk":10,"evt":5,"cooldown":15}
+{
+  "apiKey": "",
+  "model": "claude-sonnet-5-5",
+  "cpu": 90,
+  "ram": 90,
+  "disk": 10,
+  "evt": 5,
+  "cooldown": 15,
+  "autoRollback": 1,
+  "confirmSec": 60,
+  "autoRestore": 1,
+  "notify": 1,
+  "drvAuto": 1
+}

@@ -195,8 +195,8 @@ function Test-ScriptSafety([string]$script) {
         $cmdlet = Get-Command $name -CommandType Cmdlet, Function -ErrorAction SilentlyContinue
         if ($cmdlet -and ($name -in $RO_NAMES -or ($verb -in $RO_VERBS -and $name -ne 'Get-Credential'))) { continue }
         if (-not $cmdlet -and $null -ne $native) {
-            $args = ($c.CommandElements | Select-Object -Skip 1 | ForEach-Object { $_.Extent.Text }) -join ' '
-            if ($native -eq '' -or $args -match $native) { continue }
+            $argText = ($c.CommandElements | Select-Object -Skip 1 | ForEach-Object { $_.Extent.Text }) -join ' '
+            if ($native -eq '' -or $argText -match $native) { continue }
         }
         $readOnly = $false
     }
