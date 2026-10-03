@@ -1,0 +1,583 @@
+<!doctype html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>WinDash</title>
+<style>
+:root{--bg:#f7f5fb;--card:#fff;--ink:#2d2a3e;--mute:#8a86a0;--line:#ece8f4;--acc:#8b7cf6;--acc2:#f4b6d2;--ok:#5cc8a1;--warn:#f5b85c;--bad:#f27a8a;--code:#f3f0fa;--r:18px}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#17151f;--card:#211e2c;--ink:#ece9f7;--mute:#8e89a6;--line:#2e2a3c;--code:#1b1925}}
+:root[data-theme=dark]{--bg:#17151f;--card:#211e2c;--ink:#ece9f7;--mute:#8e89a6;--line:#2e2a3c;--code:#1b1925}
+*{box-sizing:border-box}
+body{margin:0;font:14px/1.5 "Segoe UI Variable","Segoe UI",system-ui,sans-serif;background:var(--bg);color:var(--ink);display:flex;min-height:100vh}
+nav{width:210px;padding:22px 14px;display:flex;flex-direction:column;gap:4px;border-right:1px solid var(--line);position:sticky;top:0;height:100vh}
+.logo{font-weight:700;font-size:20px;padding:0 10px 18px}.logo span{color:var(--acc)}
+nav button{all:unset;cursor:pointer;padding:10px 12px;border-radius:12px;color:var(--mute);display:flex;gap:10px;align-items:center}
+nav button:hover{background:var(--card)}nav button.on{background:var(--card);color:var(--ink);font-weight:600;box-shadow:0 2px 10px #8b7cf61a}
+.badge{margin-top:auto;font-size:12px;padding:8px 12px;border-radius:12px;background:var(--card);color:var(--mute)}
+main{flex:1;padding:26px 30px;max-width:1300px;min-width:0}
+h1{font-size:22px;margin:0 0 4px}.sub{color:var(--mute);margin:0 0 22px}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.sp{flex:1}
+.btn{border:0;cursor:pointer;font:inherit;padding:9px 16px;border-radius:12px;background:var(--line);color:var(--ink);transition:.15s}
+.btn:hover{transform:translateY(-1px)}.btn.p{background:var(--acc);color:#fff}.btn.d{background:var(--bad);color:#fff}.btn.s{padding:5px 10px;font-size:12.5px}
+.btn:disabled{opacity:.5;cursor:wait;transform:none}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:16px}
+.card{background:var(--card);border-radius:var(--r);padding:18px;box-shadow:0 2px 14px #2d2a3e0a;border:1px solid var(--line);min-width:0}
+.card h3{margin:0 0 12px;font-size:14px;display:flex;gap:8px;align-items:center}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;font-size:13px}.kv b{color:var(--mute);font-weight:400}.kv span{overflow-wrap:anywhere}
+.bar{height:8px;background:var(--line);border-radius:9px;overflow:hidden;margin:5px 0 10px}.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--acc),var(--acc2));border-radius:9px;transition:width .6s}
+.big{font-size:30px;font-weight:700}.mute{color:var(--mute);font-size:12.5px}
+.ring{--v:0;width:110px;height:110px;border-radius:50%;background:conic-gradient(var(--acc) calc(var(--v)*1%),var(--line) 0);display:grid;place-items:center;margin:4px auto}
+.ring div{width:84px;height:84px;border-radius:50%;background:var(--card);display:grid;place-items:center;font-size:22px;font-weight:700}
+table{width:100%;border-collapse:collapse;font-size:13px}td{padding:4px 0;border-bottom:1px dashed var(--line)}td:last-child{text-align:right;color:var(--mute)}
+textarea,input,select{font:inherit;color:var(--ink);background:var(--code);border:1px solid var(--line);border-radius:12px;padding:10px 12px;width:100%;outline:none}
+textarea:focus,input:focus{border-color:var(--acc)}
+textarea.code,pre{font:12.5px/1.55 Consolas,"Cascadia Mono",monospace}
+pre{background:var(--code);border-radius:12px;padding:14px;white-space:pre-wrap;overflow-wrap:anywhere;max-height:420px;overflow:auto;margin:0}
+.pill{font-size:11.5px;padding:2px 9px;border-radius:20px;background:var(--line);color:var(--mute);white-space:nowrap}
+.pill.low,.pill.Running{background:#5cc8a122;color:var(--ok)}.pill.medium{background:#f5b85c22;color:var(--warn)}.pill.high,.pill.Stopped{background:#f27a8a22;color:var(--bad)}
+.stars{cursor:pointer;color:#f5c85c;letter-spacing:1px}.stars s{text-decoration:none;color:var(--line)}
+.preset .emo{font-size:28px}.rank{font-weight:700;color:var(--acc);font-size:13px}
+.hidden{display:none!important}
+.widget.edit{outline:2px dashed var(--acc);cursor:grab}.widget.drag{opacity:.4}
+.modal{position:fixed;inset:0;background:#0006;display:grid;place-items:center;z-index:9;padding:16px}
+.modal .card{width:min(640px,100%);max-height:90vh;overflow:auto}
+label{display:block;font-size:12.5px;color:var(--mute);margin:10px 0 4px}
+.toast{position:fixed;bottom:20px;right:20px;background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:12px;z-index:10;animation:fade .2s}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}}
+.chips{display:flex;gap:6px;flex-wrap:wrap}.chips button{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:20px;padding:5px 12px;cursor:pointer;font:inherit;font-size:12.5px}
+.chips button:hover{border-color:var(--acc)}
+.dot{margin-left:auto;background:var(--bad);color:#fff;font-size:11px;min-width:20px;height:20px;border-radius:10px;display:grid;place-items:center;padding:0 6px}
+.kpi{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:16px;margin-bottom:16px}
+.inc{display:flex;gap:10px;padding:10px 0;border-bottom:1px dashed var(--line);align-items:flex-start}.inc:last-child{border:0}
+.lv-crit{color:var(--bad)}.lv-warn{color:var(--warn)}.lv-info{color:var(--mute)}
+svg.chart{width:100%;height:140px;display:block}
+.old td:first-child{color:var(--warn)}
+#pendingBar{position:fixed;top:12px;left:50%;transform:translateX(-50%);z-index:8;display:flex;flex-direction:column;gap:8px;width:min(620px,calc(100% - 32px))}
+.pend{background:var(--card);border:2px solid var(--warn);border-radius:16px;padding:12px 16px;box-shadow:0 8px 30px #0003;display:flex;gap:10px;align-items:center;flex-wrap:wrap;animation:fade .2s}
+.pend .cd{font-size:22px;font-weight:700;color:var(--warn);min-width:48px;text-align:center}
+.safety{border-radius:12px;padding:10px 12px;margin:0 0 10px;font-size:13px;background:var(--code)}
+.safety.low{border-left:4px solid var(--ok)}.safety.medium{border-left:4px solid var(--warn)}.safety.high{border-left:4px solid var(--bad)}
+.safety ul{margin:6px 0 0;padding-left:18px}
+.step{border-left:3px solid var(--line);padding:4px 0 12px 14px;margin-left:6px;position:relative}
+.step:before{content:'';position:absolute;left:-7px;top:8px;width:11px;height:11px;border-radius:50%;background:var(--acc)}
+.step.wait:before{background:var(--warn)}.step.skip:before{background:var(--mute)}.step.fail:before{background:var(--bad)}
+.toggle{display:flex;gap:8px;align-items:center;font-size:13px;cursor:pointer;color:var(--ink);margin:0}.toggle input{width:auto}
+.seg{display:inline-flex;background:var(--code);border-radius:12px;padding:3px}.seg button{all:unset;cursor:pointer;padding:6px 14px;border-radius:9px;font-size:13px;color:var(--mute)}.seg button.on{background:var(--card);color:var(--ink);font-weight:600;box-shadow:0 1px 4px #0001}
+.hist{cursor:pointer;padding:8px 10px;border-radius:10px;font-size:13px}.hist:hover{background:var(--code)}
+@media (max-width:760px){body{flex-direction:column}nav{width:auto;height:auto;flex-direction:row;overflow-x:auto;position:static;padding:10px 16px;border:0}.logo,.badge{display:none}main{padding:16px}}
+</style>
+</head>
+<body>
+<nav>
+  <div class="logo">🐾 Win<span>Dash</span></div>
+  <button data-tab="dash" class="on">📊 Панель</button>
+  <button data-tab="ai">✨ AI-консоль</button>
+  <button data-tab="presets">🎛️ Пресети</button>
+  <button data-tab="drivers">🧩 Драйвери</button>
+  <button data-tab="analytics">📈 Аналітика <b class="dot hidden" id="incBadge"></b></button>
+  <button data-tab="settings">⚙️ Налаштування</button>
+  <div class="badge" id="adminBadge">…</div>
+</nav>
+<main>
+<div id="pendingBar"></div>
+<!-- ПАНЕЛЬ -->
+<section id="dash">
+  <div class="row"><div><h1>Привіт! 👋</h1><p class="sub" id="hello">Збираю інформацію про систему…</p></div><div class="sp"></div>
+    <select id="interval" style="width:auto"><option value="3000">⏱ 3 с</option><option value="5000" selected>⏱ 5 с</option><option value="15000">⏱ 15 с</option><option value="0">⏸ пауза</option></select>
+    <button class="btn" id="editBtn">🎨 Налаштувати</button></div>
+  <div class="card hidden" id="editPanel" style="margin-bottom:16px"><h3>Віджети — увімкніть потрібні, перетягуйте картки для порядку</h3><div class="chips" id="widgetToggles"></div></div>
+  <div class="grid" id="widgets"></div>
+</section>
+
+<!-- AI -->
+<section id="ai" class="hidden">
+  <div class="row"><div><h1>AI-консоль ✨</h1><p class="sub">Скрипт — AI пише, ви запускаєте. Агент — сам діагностує крок за кроком і пропонує виправлення.</p></div><div class="sp"></div>
+    <div class="seg" id="aiMode"><button data-m="script" class="on">✨ Скрипт</button><button data-m="agent">🤖 Агент</button></div></div>
+  <div class="grid" style="grid-template-columns:minmax(0,2fr) minmax(240px,1fr)">
+    <div style="display:flex;flex-direction:column;gap:16px;min-width:0">
+      <div class="card">
+        <textarea id="prompt" rows="3" placeholder="Напр.: покажи 10 найбільших файлів у Downloads"></textarea>
+        <div class="chips" style="margin:10px 0" id="ideas"></div>
+        <div class="row"><button class="btn p" id="genBtn">✨ Згенерувати</button><span class="mute">Ctrl+Enter</span><div class="sp"></div>
+          <label class="toggle" title="Сервер заблокує будь-який скрипт, що може змінити систему"><input type="checkbox" id="roMode"> 🔒 лише читання</label>
+          <label class="toggle agentOnly hidden" title="Кроки діагностики без змін виконуються без підтвердження"><input type="checkbox" id="agentAuto" checked> ⚡ авто-діагностика</label>
+          <button class="btn s scriptOnly" id="manualBtn">⌨️ Вручну</button></div>
+      </div>
+      <div class="card hidden" id="agentCard"><div class="row" style="margin-bottom:10px"><h3 style="margin:0">🤖 Агент</h3><span class="mute" id="agentGoal"></span><div class="sp"></div><button class="btn s" id="agentStop">⏹ Зупинити</button></div><div id="agentSteps"></div></div>
+      <div class="card hidden" id="scriptCard">
+        <div class="row" style="margin-bottom:8px"><h3 style="margin:0">📜 Скрипт</h3><span class="pill" id="risk"></span><span class="pill hidden" id="needAdmin">🛡 потрібен адмін</span></div>
+        <p class="mute" id="explain" style="margin:0 0 10px"></p>
+        <div class="safety" id="safety">🛡 Аналізую…</div>
+        <textarea class="code" id="script" rows="10" spellcheck="false"></textarea>
+        <details id="revertBox" style="margin-top:8px"><summary class="mute">↩️ Скрипт відкату</summary><textarea class="code" id="revert" rows="4" spellcheck="false" style="margin-top:6px"></textarea></details>
+        <div class="row" style="margin-top:10px"><button class="btn p" id="runBtn">▶ Виконати</button><button class="btn" id="savePresetBtn">💾 Зберегти як пресет</button><div class="sp"></div><span class="mute" id="runMeta"></span></div>
+      </div>
+      <div class="card hidden" id="outCard"><h3>🖥 Результат</h3><pre id="out"></pre></div>
+    </div>
+    <div class="card"><div class="row"><h3 style="margin:0">🕘 Історія</h3><div class="sp"></div><button class="btn s" id="clearHist">очистити</button></div><div id="history" style="margin-top:8px"></div></div>
+  </div>
+</section>
+
+<!-- ПРЕСЕТИ -->
+<section id="presets" class="hidden">
+  <div class="row"><div><h1>Пресети 🎛️</h1><p class="sub">Відсортовано за рейтингом: ваші оцінки ⭐ + частота використання.</p></div><div class="sp"></div>
+    <button class="btn p" id="newPreset">＋ Новий</button><button class="btn" id="importBtn">📥 Імпорт</button><button class="btn" id="exportBtn">📤 Експорт</button>
+    <input type="file" id="importFile" accept=".json" class="hidden"></div>
+  <div class="row" style="margin-bottom:16px"><input id="search" placeholder="🔎 Пошук…" style="max-width:260px"><div class="chips" id="cats"></div></div>
+  <div class="grid" id="presetGrid"></div>
+</section>
+
+<!-- ДРАЙВЕРИ -->
+<section id="drivers" class="hidden">
+  <div class="row"><div><h1>Драйвери 🧩</h1><p class="sub">Автопошук: Windows Update → Microsoft Update Catalog за Hardware ID → сайт виробника. Знімок і точка відновлення перед встановленням.</p></div><div class="sp"></div>
+    <button class="btn" id="drvScan">🔄 Оновити список</button></div>
+  <div class="card" style="margin-bottom:16px">
+    <div class="row"><h3 style="margin:0">⚡ Автоматичний пошук і встановлення</h3><div class="sp"></div><span class="mute" id="drvLast"></span></div>
+    <p class="mute" style="margin:6px 0 12px">Шукає драйвери для пристроїв без драйвера в Windows Update та Microsoft Update Catalog (там значно більше), ставить, пересканує обладнання. Нові драйвери можна відкотити одним кліком.</p>
+    <div class="row"><button class="btn p" id="drvAutoInstall">⚡ Знайти й встановити</button><button class="btn" id="drvAutoScan">🔎 Лише знайти</button></div>
+    <div id="drvTask" class="hidden" style="margin-top:14px"><div class="row" style="margin-bottom:6px"><b id="drvTaskName"></b><div class="sp"></div><span class="mute" id="drvTaskTime"></span></div><pre id="drvTaskOut"></pre><div id="drvResult" style="margin-top:12px"></div></div>
+  </div>
+  <div class="grid" style="margin-bottom:16px">
+    <div class="card"><h3>🛠 Дії</h3><div style="display:flex;flex-direction:column;gap:8px" id="drvActions"></div>
+      <label>Встановити з папки (розпакований .inf-пакет)</label><div class="row"><input id="drvPath" placeholder="D:\Drivers\Realtek" style="flex:1;width:auto"><button class="btn s" id="drvFolder">📂 Встановити</button></div></div>
+    <div class="card"><h3>🚨 Проблемні пристрої</h3><div id="drvProblems" class="mute">Натисніть «Сканувати»</div></div>
+  </div>
+  <div class="card"><div class="row" style="margin-bottom:10px"><h3 style="margin:0">📋 Встановлені драйвери <span class="mute" id="drvCount"></span></h3><div class="sp"></div>
+    <label style="margin:0;display:flex;gap:6px;align-items:center"><input type="checkbox" id="drvOld" style="width:auto"> лише старші 3 років</label><input id="drvSearch" placeholder="🔎 Фільтр…" style="max-width:220px"></div>
+    <div style="max-height:520px;overflow:auto"><table id="drvTable"></table></div></div>
+</section>
+
+<!-- АНАЛІТИКА -->
+<section id="analytics" class="hidden">
+  <div class="row"><div><h1>Аналітика 📈</h1><p class="sub">Інциденти від тригерів, метрики за 24 год і статистика запусків. Логи — у папці logs\ (JSONL/CSV, ротація 30 днів).</p></div><div class="sp"></div>
+    <button class="btn" id="anRefresh">🔄</button><button class="btn" id="anExport">📤 Логи</button><button class="btn" id="anClear">🧹 Очистити</button></div>
+  <div class="kpi" id="anKpi"></div>
+  <div class="grid" style="grid-template-columns:minmax(0,2fr) minmax(260px,1fr);margin-bottom:16px">
+    <div class="card"><div class="row"><h3 style="margin:0">📉 CPU і RAM — 24 год</h3><div class="sp"></div><span class="mute"><b style="color:var(--acc)">━</b> CPU <b style="color:var(--acc2)">━</b> RAM</span></div><div id="anChart"></div></div>
+    <div class="card"><h3>🧷 Інциденти за типом</h3><div id="anTypes"></div></div>
+  </div>
+  <div class="grid" style="grid-template-columns:minmax(0,2fr) minmax(260px,1fr)">
+    <div class="card"><h3>🚨 Стрічка інцидентів</h3><div id="anFeed"></div></div>
+    <div style="display:flex;flex-direction:column;gap:16px;min-width:0">
+      <div class="card"><h3>🕰 Знімки й відкат</h3><div id="anSnaps"></div></div>
+      <div class="card"><h3>🏃 Запуски</h3><div id="anRuns"></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- НАЛАШТУВАННЯ -->
+<section id="settings" class="hidden">
+  <h1>Налаштування ⚙️</h1><p class="sub">Ключ зберігається локально у config.json поруч зі скриптом.</p>
+  <div class="grid">
+    <div class="card"><h3>🤖 AI (Claude)</h3>
+      <label>API-ключ Anthropic <span id="keyState"></span></label><input id="apiKey" type="password" placeholder="sk-ant-…" autocomplete="off">
+      <label>Модель</label><select id="model"><option>claude-sonnet-5-5</option><option>claude-opus-5-5</option><option>claude-haiku-4-5-20251001</option></select>
+      <div class="row" style="margin-top:14px"><button class="btn p" id="saveCfg">Зберегти</button></div></div>
+    <div class="card"><h3>🎨 Вигляд</h3>
+      <label>Тема</label><select id="theme"><option value="">Як у системі</option><option value="light">Світла</option><option value="dark">Темна</option></select>
+      <label>Акцентний колір</label><div class="chips" id="accents"></div></div>
+    <div class="card"><h3>🚨 Тригери проблем</h3>
+      <div class="row"><div class="sp"><label>CPU ≥ %</label><input id="tCpu" type="number"></div><div class="sp"><label>RAM ≥ %</label><input id="tRam" type="number"></div></div>
+      <div class="row"><div class="sp"><label>Диск вільно &lt; %</label><input id="tDisk" type="number"></div><div class="sp"><label>Помилок журналу/год ≥</label><input id="tEvt" type="number"></div></div>
+      <label>Пауза між повторами, хв</label><input id="tCd" type="number">
+      <div class="row" style="margin-top:14px"><button class="btn p" id="saveTrig">Зберегти</button></div></div>
+    <div class="card"><h3>🛡 Безпека й відкат</h3>
+      <label class="toggle" style="margin:8px 0"><input type="checkbox" id="sRollback"> ↩ Автовідкат, якщо скрипт завершився з помилкою</label>
+      <label class="toggle" style="margin:8px 0"><input type="checkbox" id="sRestore"> 🛟 Точка відновлення перед скриптом високого ризику</label>
+      <label>«Зберегти зміни?» — автовідкат, якщо не підтвердити за, с (0 — вимкнено)</label><input id="sConfirm" type="number" min="0">
+      <p class="mute" style="margin:8px 0 0">Відлік іде на сервері: якщо зміна поклала мережу чи інтерфейс, або ПК перезавантажився — відкат однаково спрацює.</p>
+      <div class="row" style="margin-top:14px"><button class="btn p" id="saveSafety">Зберегти</button></div></div>
+    <div class="card"><h3>🌙 Фонова робота</h3>
+      <label class="toggle" style="margin:8px 0"><input type="checkbox" id="sAutostart"> 🚀 Запускати WinDash при вході у Windows (у фоні)</label>
+      <label class="toggle" style="margin:8px 0"><input type="checkbox" id="sNotify"> 🔔 Сповіщення Windows про інциденти</label>
+      <label>Драйвери у фоні (раз на добу)</label><select id="sDrv"><option value="0">Вимкнено</option><option value="1">Шукати й сповіщати</option><option value="2">Шукати й встановлювати</option></select>
+      <p class="mute" style="margin:8px 0 0">Монітор тригерів працює щохвилини, поки запущено сервер — навіть коли вкладка закрита.</p>
+      <div class="row" style="margin-top:14px"><button class="btn p" id="saveBg">Зберегти</button></div></div>
+    <div class="card"><h3>🧹 Дані</h3><p class="mute">Скинути пресети до стандартних (ваші власні буде видалено).</p><button class="btn d" id="resetPresets">Скинути пресети</button></div>
+  </div>
+</section>
+</main>
+<div id="modalRoot"></div>
+
+<script>
+const TOKEN='__TOKEN__';
+const $=s=>document.querySelector(s), esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const store={get(k,d){try{const v=localStorage.getItem('wd.'+k);return v?JSON.parse(v):d}catch{return d}},set(k,v){try{localStorage.setItem('wd.'+k,JSON.stringify(v))}catch{}}};
+async function api(p,body){const r=await fetch(p,{method:body?'POST':'GET',headers:{'X-Token':TOKEN,'Content-Type':'application/json'},body:body?JSON.stringify(body):undefined});const j=await r.json();if(!r.ok)throw new Error(j.error||r.status);return j}
+function toast(m){const t=document.createElement('div');t.className='toast';t.textContent=m;document.body.append(t);setTimeout(()=>t.remove(),2600)}
+function modal(html){$('#modalRoot').innerHTML=`<div class="modal"><div class="card">${html}</div></div>`;const m=$('#modalRoot .modal');m.onclick=e=>{if(e.target===m)closeModal()};return m}
+const closeModal=()=>$('#modalRoot').innerHTML='';
+
+/* ---------- вкладки ---------- */
+document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{document.querySelectorAll('nav button').forEach(x=>x.classList.toggle('on',x===b));document.querySelectorAll('main>section').forEach(s=>s.classList.toggle('hidden',s.id!==b.dataset.tab));store.set('tab',b.dataset.tab);window['tab_'+b.dataset.tab]?.()});
+
+/* ---------- тема ---------- */
+const ACC=['#8b7cf6','#f28bb5','#5cc8a1','#5ca8f5','#f5a35c','#e0b03a'];
+function applyLook(){const th=store.get('theme','');th?document.documentElement.dataset.theme=th:delete document.documentElement.dataset.theme;document.documentElement.style.setProperty('--acc',store.get('acc',ACC[0]))}
+$('#theme').value=store.get('theme','');$('#theme').onchange=e=>{store.set('theme',e.target.value);applyLook()};
+$('#accents').innerHTML=ACC.map(c=>`<button data-c="${c}" style="background:${c};width:30px;height:30px;padding:0"></button>`).join('');
+$('#accents').onclick=e=>{const c=e.target.dataset.c;if(c){store.set('acc',c);applyLook()}};applyLook();
+
+/* ---------- панель ---------- */
+const fmtUp=s=>{const d=Math.floor(s/86400),h=Math.floor(s%86400/3600),m=Math.floor(s%3600/60);return(d?d+' д ':'')+h+' год '+m+' хв'};
+const pct=(a,b)=>b?Math.round(a/b*100):0;
+let S=null,L=null;
+const WIDGETS={
+ sys:{t:'💻 Система',r:()=>`<div class="kv"><b>Хост</b><span>${esc(S.host)}</span><b>Користувач</b><span>${esc(S.user)}</span><b>ОС</b><span>${esc(S.os)}</span><b>Версія</b><span>${esc(S.build)} · ${esc(S.arch)}</span><b>Встановлено</b><span>${S.installed}</span><b>PowerShell</b><span>${S.ps}</span></div>`},
+ uptime:{t:'⏳ Аптайм',r:()=>`<div class="big">${fmtUp(L.uptime)}</div><div class="mute">з ${new Date(S.boot).toLocaleString('uk')}</div><div style="margin-top:10px" class="kv"><b>Процесів</b><span>${L.procCount}</span><b>Служб</b><span>${L.svcRunning} з ${L.svcTotal} працює</span></div>`},
+ cpu:{t:'🧠 Процесор',r:()=>`<div class="ring" style="--v:${L.cpu}"><div>${L.cpu}%</div></div><div class="mute" style="text-align:center">${esc(S.cpu)}<br>${S.cores} ядер · ${S.threads} потоків · ${S.mhz} МГц</div>`},
+ ram:{t:'🧮 Памʼять',r:()=>{const u=L.ramTotal-L.ramFree,p=pct(u,L.ramTotal);return`<div class="big">${p}%</div><div class="bar"><i style="width:${p}%"></i></div><div class="mute">${u.toFixed(1)} з ${L.ramTotal} ГБ використано · ${L.ramFree} ГБ вільно</div>`}},
+ disks:{t:'💽 Диски',r:()=>L.disks.map(d=>{const p=pct(d.size-d.free,d.size);return`<div class="row"><b>${d.n}</b><span class="mute">${esc(d.label)}</span><div class="sp"></div><span class="mute">${d.free} / ${d.size} ГБ вільно</span></div><div class="bar"><i style="width:${p}%;${p>90?'background:var(--bad)':''}"></i></div>`}).join('')},
+ gpu:{t:'🎮 Відеокарта',r:()=>S.gpu.map(g=>`<div style="margin-bottom:8px"><b>${esc(g.n)}</b><div class="mute">драйвер ${esc(g.drv)}${g.vram>0?' · '+g.vram+' ГБ*':''}</div></div>`).join('')},
+ net:{t:'🌐 Мережа',r:()=>S.net.map(n=>`<div style="margin-bottom:10px"><b>${esc(n.n)}</b><div class="kv"><b>IP</b><span>${esc(n.ip)}</span><b>MAC</b><span>${esc(n.mac)}</span><b>Шлюз</b><span>${esc(n.gw)||'—'}</span></div></div>`).join('')||'<span class="mute">Немає активних адаптерів</span>'},
+ hw:{t:'🔩 Залізо',r:()=>`<div class="kv"><b>Виробник</b><span>${esc(S.maker)}</span><b>Модель</b><span>${esc(S.model)}</span><b>Плата</b><span>${esc(S.board)}</span><b>BIOS</b><span>${esc(S.bios)}</span><b>RAM</b><span>${S.ramGb} ГБ</span></div>`},
+ procs:{t:'🔥 Топ процесів (RAM)',r:()=>`<table>${L.procs.map(p=>`<tr><td>${esc(p.n)} <span class="mute">#${p.id}</span></td><td>${p.mem} МБ</td></tr>`).join('')}</table>`},
+ battery:{t:'🔋 Батарея',r:()=>L.battery?`<div class="big">${L.battery.pct}%</div><div class="bar"><i style="width:${L.battery.pct}%"></i></div><div class="mute">${L.battery.status==2?'Заряджається / від мережі':'Від батареї'}</div>`:'<span class="mute">Батареї немає — це настільний ПК 🖥</span>'},
+};
+let layout=store.get('layout',Object.keys(WIDGETS).map(id=>({id,on:id!=='battery'||true})));
+Object.keys(WIDGETS).forEach(id=>{if(!layout.find(w=>w.id===id))layout.push({id,on:true})});
+let editing=false;
+function renderWidgets(){
+ if(!S||!L)return;
+ $('#widgets').innerHTML=layout.filter(w=>w.on&&WIDGETS[w.id]).map(w=>`<div class="card widget ${editing?'edit':''}" draggable="${editing}" data-id="${w.id}"><h3>${WIDGETS[w.id].t}</h3>${WIDGETS[w.id].r()}</div>`).join('');
+ $('#widgetToggles').innerHTML=layout.map(w=>`<button data-id="${w.id}" style="${w.on?'border-color:var(--acc);color:var(--acc)':''}">${w.on?'✓ ':''}${WIDGETS[w.id].t}</button>`).join('');
+}
+$('#widgetToggles').onclick=e=>{const id=e.target.dataset.id;if(!id)return;const w=layout.find(x=>x.id===id);w.on=!w.on;store.set('layout',layout);renderWidgets()};
+$('#editBtn').onclick=()=>{editing=!editing;$('#editPanel').classList.toggle('hidden',!editing);$('#editBtn').textContent=editing?'✅ Готово':'🎨 Налаштувати';renderWidgets()};
+let dragId=null;
+$('#widgets').addEventListener('dragstart',e=>{dragId=e.target.closest('.widget')?.dataset.id;e.target.classList.add('drag')});
+$('#widgets').addEventListener('dragover',e=>e.preventDefault());
+$('#widgets').addEventListener('drop',e=>{e.preventDefault();const to=e.target.closest('.widget')?.dataset.id;if(!dragId||!to||to===dragId)return renderWidgets();const a=layout.findIndex(w=>w.id===dragId),[m]=layout.splice(a,1);layout.splice(layout.findIndex(w=>w.id===to),0,m);store.set('layout',layout);renderWidgets()});
+$('#widgets').addEventListener('dragend',renderWidgets);
+
+let timer;
+async function tick(){try{L=await api('/api/live');renderWidgets();onIncidents(L.incidents);syncPending(L.pending)}catch(e){console.warn(e)}schedule()}
+function schedule(){clearTimeout(timer);const iv=+$('#interval').value;if(iv)timer=setTimeout(tick,iv)}
+$('#interval').value=store.get('interval','5000');$('#interval').onchange=e=>{store.set('interval',e.target.value);schedule()};
+(async()=>{try{S=await api('/api/static');$('#hello').textContent=`${S.host} · ${S.os}`;$('#adminBadge').innerHTML=S.isAdmin?'🛡 Адміністратор':'👤 Без прав адміна<br><span style="font-size:11px">запустіть start.cmd</span>';tick()}catch(e){$('#hello').textContent='Не вдалося зʼєднатися з сервером: '+e.message}})();
+
+/* ---------- AI-консоль ---------- */
+const IDEAS=['Покажи 10 найбільших файлів у Downloads','Очисти тимчасові файли','Які програми в автозапуску?','Перевір стан дисків (SMART)','Скинь DNS-кеш і покажи IP','Список встановлених програм','Хто слухає мережеві порти?','Створи точку відновлення'];
+$('#ideas').innerHTML=IDEAS.map(i=>`<button>${esc(i)}</button>`).join('');
+$('#ideas').onclick=e=>{if(e.target.tagName==='BUTTON'){$('#prompt').value=e.target.textContent;generate()}};
+let hist=store.get('history',[]);
+function renderHist(){$('#history').innerHTML=hist.length?hist.map((h,i)=>`<div class="hist" data-i="${i}">${h.exit===0?'✅':h.exit==null?'📝':'⚠️'} ${esc(h.prompt||h.script.slice(0,60))}<div class="mute">${new Date(h.at).toLocaleString('uk')}</div></div>`).join(''):'<p class="mute">Поки порожньо</p>'}
+$('#history').onclick=e=>{const h=hist[e.target.closest('.hist')?.dataset.i];if(h)showScript(h)};
+$('#clearHist').onclick=()=>{hist=[];store.set('history',hist);renderHist()};renderHist();
+const RK={low:0,medium:1,high:2},maxRisk=(a,b)=>(RK[a]??0)>=(RK[b]??0)?(a||'low'):b;
+const RISK={low:'🟢 низький',medium:'🟡 середній',high:'🔴 високий'};
+let lastAn=null,anT;
+function showScript(r){$('#scriptCard').classList.remove('hidden');$('#prompt').value=r.prompt||'';$('#script').value=r.script||'';$('#revert').value=r.revert||'';$('#explain').textContent=r.explanation||'';
+ $('#risk').className='pill '+(r.risk||'');$('#risk').textContent=r.risk?'AI: '+RISK[r.risk]+' ризик':'ручний режим';$('#needAdmin').classList.toggle('hidden',!r.needsAdmin);analyze()}
+function renderSafety(a){
+ const t=a.touches||{services:[],registry:[]};$('#safety').className='safety '+a.level;
+ $('#safety').innerHTML=`<b>🛡 Перевірка: ${RISK[a.level]} ризик · ${a.readOnly?'🔒 лише читання':'✏️ змінює систему'}</b>`+
+  (t.services.length||t.registry.length?`<div class="mute">📸 Перед запуском буде знімок: служб ${t.services.length}, ключів реєстру ${t.registry.length} — з автовідкатом</div>`:(!a.readOnly?'<div class="mute">Знімок не потрібен: служб і реєстру скрипт не чіпає</div>':''))+
+  (a.findings.length||a.errors.length?`<ul>${a.findings.map(f=>`<li>${esc(f.why)}: <code>${esc(f.cmd)}</code>${f.line?` · рядок ${f.line}`:''}</li>`).join('')}${a.errors.map(x=>`<li>⚠️ ${esc(x)}</li>`).join('')}</ul>`:'')}
+async function analyze(){const s=$('#script').value;if(!s.trim()){$('#safety').innerHTML='';lastAn=null;return}try{lastAn=await api('/api/analyze',{script:s});renderSafety(lastAn)}catch{}}
+$('#script').addEventListener('input',()=>{clearTimeout(anT);anT=setTimeout(analyze,600)});
+
+/* Єдина точка запуску: знімок, автовідкат і «Зберегти зміни?» обробляє сервер */
+async function exec(script,{src,name,timeout,readOnly}={}){
+ const r=await api('/api/run',{script,src,name,timeout,readOnly:readOnly||$('#roMode').checked});
+ onIncidents(r.incidents);if(r.pending)addPending(r.pending);
+ if(r.rolledBack)r.output=(r.output||'')+'\n\n↩ АВТОВІДКАТ (скрипт завершився з помилкою):\n'+r.rolledBack.join('\n');
+ return r}
+
+/* Банери «Зберегти зміни?» з відліком */
+const pend={};
+function addPending(p){pend[p.id]={...p,until:Date.now()+p.left*1000};renderPending()}
+function syncPending(list){if(!list)return;const ids=new Set(list.map(p=>p.id));let ch=false;
+ for(const id in pend)if(!ids.has(id)){delete pend[id];ch=true}
+ list.forEach(p=>{if(!pend[p.id]){pend[p.id]={...p,until:Date.now()+p.left*1000};ch=true}});if(ch)renderPending()}
+function renderPending(){$('#pendingBar').innerHTML=Object.values(pend).map(p=>`<div class="pend" data-id="${p.id}"><span class="cd">${Math.max(0,Math.ceil((p.until-Date.now())/1000))}</span><div style="flex:1;min-width:0"><b>Зберегти зміни?</b><div class="mute">${esc(p.name)} — інакше буде автоматичний відкат</div></div><button class="btn p s" data-a="keep">✅ Зберегти</button><button class="btn s" data-a="undo">↩ Відкотити</button></div>`).join('')}
+setInterval(()=>{for(const [id,p] of Object.entries(pend)){const left=Math.ceil((p.until-Date.now())/1000);
+ if(left<-3){delete pend[id];renderPending();toast('↩ Автовідкат: «'+p.name+'»');continue}
+ const el=document.querySelector(`.pend[data-id="${id}"] .cd`);if(el)el.textContent=Math.max(0,left)}},1000);
+$('#pendingBar').onclick=async e=>{const a=e.target.dataset.a,id=e.target.closest('.pend')?.dataset.id;if(!a||!id)return;delete pend[id];renderPending();
+ try{if(a==='keep'){await api('/api/confirm',{id});toast('✅ Зміни збережено')}else showRollback(await api('/api/rollback',{id}))}catch(err){toast(err.message)}};
+function showRollback(r){modal(`<h3>↩ Відкат виконано</h3><pre>${esc(r.log.join('\n')||'(нічого не змінювалось)')}</pre><div class="row" style="margin-top:12px"><div class="sp"></div><button class="btn p" onclick="closeModal()">Ок</button></div>`)}
+document.addEventListener('click',async e=>{const b=e.target.closest('[data-snap]');if(!b)return;
+ if(!confirm('Відкотити зміни зі знімка '+b.dataset.snap+'?'))return;
+ try{showRollback(await api('/api/rollback',{id:b.dataset.snap}));if(store.get('tab')==='analytics')tab_analytics()}catch(err){toast(err.message)}});
+
+/* Режими: скрипт / агент */
+let aiMode=store.get('aiMode','script');
+const genLabel=()=>aiMode==='agent'?'🤖 Запустити агента':'✨ Згенерувати';
+function setMode(m){aiMode=m;store.set('aiMode',m);
+ document.querySelectorAll('#aiMode button').forEach(b=>b.classList.toggle('on',b.dataset.m===m));
+ document.querySelectorAll('.agentOnly').forEach(x=>x.classList.toggle('hidden',m!=='agent'));
+ document.querySelectorAll('.scriptOnly').forEach(x=>x.classList.toggle('hidden',m==='agent'));
+ $('#genBtn').textContent=genLabel();$('#prompt').placeholder=m==='agent'?'Напр.: чому Windows довго вантажиться? / пропав звук / повільний інтернет':'Напр.: покажи 10 найбільших файлів у Downloads'}
+$('#aiMode').onclick=e=>{if(e.target.dataset.m)setMode(e.target.dataset.m)};setMode(aiMode);
+async function generate(){const p=$('#prompt').value.trim();if(!p)return;if(aiMode==='agent')return agentRun(p);
+ const b=$('#genBtn');b.disabled=true;b.textContent='🪄 Думаю…';
+ try{const r=await api('/api/ai',{prompt:p});r.prompt=p;showScript(r);hist.unshift({...r,at:Date.now()});hist=hist.slice(0,40);store.set('history',hist);renderHist()}
+ catch(e){toast('😿 '+e.message)}finally{b.disabled=false;b.textContent=genLabel()}}
+$('#genBtn').onclick=generate;$('#prompt').onkeydown=e=>{if(e.key==='Enter'&&e.ctrlKey)generate()};
+$('#manualBtn').onclick=()=>showScript({script:'Get-ComputerInfo | Select-Object OsName, CsProcessors, OsTotalVisibleMemorySize'});
+
+/* Агент: діагностика → причина → виправлення; кроки без змін можуть іти самі */
+let agentAbort=false;
+function addStep(h){const d=document.createElement('div');d.className='step';d.innerHTML=h;$('#agentSteps').append(d);d.scrollIntoView({block:'nearest',behavior:'smooth'});return d}
+function ask(box,lvl){return new Promise(res=>{
+ box.innerHTML=`<div class="row" style="margin-top:6px"><button class="btn p s" data-v="1">▶ Виконати</button><button class="btn s" data-v="0">⏭ Пропустити</button><button class="btn s" data-v="x">⏹ Стоп</button></div>`;
+ box.onclick=e=>{const v=e.target.dataset.v;if(v==null)return;if(v==='1'&&lvl==='high'&&!confirm('Високий ризик. Виконати цей крок?'))return;box.innerHTML='';res(v==='1'?true:v==='0'?false:null)}})}
+async function agentRun(goal){
+ agentAbort=false;$('#agentCard').classList.remove('hidden');$('#scriptCard').classList.add('hidden');$('#outCard').classList.add('hidden');
+ $('#agentGoal').textContent=goal;$('#agentSteps').innerHTML='';const steps=[],b=$('#genBtn');b.disabled=true;b.textContent='🤖 Працює…';
+ try{for(let i=0;i<8&&!agentAbort;i++){
+  const el=addStep('<span class="mute">🤔 Думаю…</span>');let r;
+  try{r=await api('/api/agent',{goal,steps})}catch(e){el.className='step fail';el.innerHTML=`<b class="lv-crit">😿 ${esc(e.message)}</b>`;break}
+  if(r.done||!r.script){el.innerHTML=`<b>🏁 Підсумок</b><p style="margin:4px 0">${esc(r.thought||'')}</p><pre>${esc(r.summary||'')}</pre>`;break}
+  const a=r.analysis||{level:'high',readOnly:false},lvl=maxRisk(r.risk,a.level),auto=a.readOnly&&$('#agentAuto').checked;
+  el.innerHTML=`<div><b>Крок ${i+1}.</b> ${esc(r.thought)}</div><div class="row" style="margin:6px 0"><span class="pill ${lvl}">${RISK[lvl]}</span><span class="pill">${a.readOnly?'🔒 лише читання':'✏️ змінює систему'}</span>${auto?'<span class="pill">⚡ авто</span>':''}</div>
+   <details ${a.readOnly?'':'open'}><summary class="mute">скрипт</summary><pre>${esc(r.script)}</pre></details><div class="act"></div><pre class="o hidden" style="margin-top:6px"></pre>`;
+  const step={thought:r.thought,script:r.script,status:'',exit:null,output:''};
+  let go=auto;if(!go){el.className='step wait';go=await ask(el.querySelector('.act'),lvl)}
+  if(go===null){agentAbort=true;el.className='step skip';break}
+  if(!go){step.status='пропущено користувачем';el.className='step skip';steps.push(step);continue}
+  el.className='step';const o=el.querySelector('.o');o.classList.remove('hidden');o.textContent='⏳ Виконується…';
+  const res=await exec(r.script,{src:'agent',name:'Агент: '+goal.slice(0,60),readOnly:auto});
+  o.textContent=res.output||'(без виводу)';if(res.exitCode!==0)el.className='step fail';
+  Object.assign(step,{status:res.blocked?'заблоковано режимом «лише читання»':res.exitCode===0?'успіх':'помилка',exit:res.exitCode,output:res.output});steps.push(step)}
+  if(agentAbort)addStep('<span class="mute">⏹ Зупинено</span>').className='step skip'}
+ finally{b.disabled=false;b.textContent=genLabel()}}
+$('#agentStop').onclick=()=>{agentAbort=true;document.querySelector('#agentSteps .act [data-v=x]')?.click()};
+
+async function runScript(script){
+ $('#outCard').classList.remove('hidden');$('#out').textContent='⏳ Виконується…';
+ const r=await exec(script,{src:'ai',name:$('#prompt').value.trim().slice(0,80)||'ручний скрипт'});$('#out').textContent=r.output||'(без виводу)';
+ $('#runMeta').textContent=`${r.exitCode===0?'✅':'⚠️'} код ${r.exitCode} · ${(r.ms/1000).toFixed(1)} с${r.timedOut?' · тайм-аут':''}${r.snap?' · 📸 знімок':''}`;return r}
+$('#runBtn').onclick=async()=>{const s=$('#script').value.trim();if(!s)return;
+ const ai=[...$('#risk').classList].find(c=>c in RK),lvl=maxRisk(ai,lastAn?.level);
+ if(lvl==='high'&&!confirm('Скрипт має ВИСОКИЙ ризик. Виконати?'))return;
+ const b=$('#runBtn');b.disabled=true;try{const r=await runScript(s);const h=hist.find(h=>h.script===s);if(h){h.exit=r.exitCode;store.set('history',hist);renderHist()}}catch(e){toast(e.message)}finally{b.disabled=false}};
+$('#savePresetBtn').onclick=()=>editPreset({name:$('#prompt').value.slice(0,40)||'Мій скрипт',emoji:'✨',cat:'Мої',desc:$('#explain').textContent,script:$('#script').value,revert:$('#revert').value});
+
+/* ---------- пресети ---------- */
+const svc=(id,emoji,name,cat,desc,services,risk='low')=>({id,emoji,name,cat,desc,services,risk,stars:0,uses:0,builtin:true});
+const DEFAULTS=[
+ svc('telemetry','🕵️','Телеметрія Windows','Приватність','Вимикає збір діагностики та push-маршрутизацію.',['DiagTrack','dmwappushservice','diagsvc','WerSvc']),
+ svc('xbox','🎮','Xbox-служби','Ігри','Для тих, хто не користується Xbox App / Game Pass.',['XblAuthManager','XblGameSave','XboxNetApiSvc','XboxGipSvc']),
+ svc('print','🖨️','Друк і факс','Пристрої','Немає принтера? Вимкніть диспетчер друку (також закриває PrintNightmare).',['Spooler','PrintNotify','Fax']),
+ svc('bt','🦷','Bluetooth','Пристрої','Вимикає стек Bluetooth, якщо він не потрібен.',['bthserv','BTAGService','BthAvctpSvc'],'medium'),
+ svc('remote','🔐','Віддалений доступ','Безпека','Віддалений реєстр, RDP та маршрутизація — менше поверхні атаки.',['RemoteRegistry','TermService','SessionEnv','UmRdpService','RemoteAccess'],'medium'),
+ svc('search','🔎','Індексація пошуку','Продуктивність','Менше навантаження на диск; пошук у Пуску стане повільнішим.',['WSearch'],'medium'),
+ svc('sysmain','⚡','SysMain (Superfetch)','Продуктивність','Корисно на SSD із малим обсягом RAM.',['SysMain']),
+ svc('maps','🗺️','Карти та геолокація','Приватність','Офлайн-карти та служба геоданих.',['MapsBroker','lfsvc']),
+ svc('hyperv','🧊','Hyper-V гостьові служби','Віртуалізація','Не потрібні поза віртуальною машиною Hyper-V.',['vmickvpexchange','vmicguestinterface','vmicshutdown','vmicheartbeat','vmicvmsession','vmicrdv','vmictimesync','vmicvss']),
+ svc('phone','📱','Телефон і SMS','Приватність','Служби телефонії та обміну повідомленнями.',['PhoneSvc','TapiSrv','SmsRouter'],'medium'),
+ {id:'repair-core',emoji:'🧯',name:'Відновити системні служби',cat:'Обслуговування',desc:'Вмикає Журнал подій, Windows Update, BITS, криптографію та встановлювач — без них не працюють оновлення й драйвери.',risk:'low',stars:0,uses:0,builtin:true,
+  script:"$want=[ordered]@{EventLog='Automatic';CryptSvc='Automatic';RpcSs='Automatic';wuauserv='Manual';BITS='Manual';TrustedInstaller='Manual'}\nforeach($n in $want.Keys){\n  try{ Set-Service -Name $n -StartupType $want[$n]; \"✓ $n : $($want[$n])\" }catch{ \"✗ $n : $($_.Exception.Message)\" }\n}\nStart-Service EventLog -ErrorAction SilentlyContinue\nGet-Service EventLog,wuauserv,BITS,CryptSvc | Format-Table Name,Status,StartType -AutoSize",revert:''},
+ {id:'cleanup',emoji:'🧹',name:'Прибирання тимчасових файлів',cat:'Обслуговування',desc:'Очищає %TEMP%, Windows\\Temp та кошик.',risk:'low',stars:0,uses:0,builtin:true,
+  script:"$before=(Get-PSDrive C).Free\nRemove-Item \"$env:TEMP\\*\",\"$env:windir\\Temp\\*\" -Recurse -Force -ErrorAction SilentlyContinue\nClear-RecycleBin -Force -ErrorAction SilentlyContinue\n'Звільнено: {0:N1} МБ' -f (((Get-PSDrive C).Free-$before)/1MB)",revert:''},
+ {id:'dns',emoji:'🌐',name:'Перезапуск мережі',cat:'Обслуговування',desc:'Скидає DNS-кеш і оновлює IP-адресу.',risk:'low',stars:0,uses:0,builtin:true,script:'ipconfig /flushdns\nipconfig /release | Out-Null\nipconfig /renew | Out-Null\nGet-NetIPAddress -AddressFamily IPv4 | ? IPAddress -ne "127.0.0.1" | ft InterfaceAlias,IPAddress',revert:''},
+];
+const svcScript=(list,on)=>`$names=@(${list.map(s=>`'${s.replace(/'/g,"''")}'`).join(',')})\nforeach($n in $names){\n  $s=Get-Service -Name $n -ErrorAction SilentlyContinue\n  if(-not $s){\"– $n : немає в системі\";continue}\n  try{\n${on?"    Set-Service -Name $n -StartupType Manual\n    Start-Service -Name $n -ErrorAction SilentlyContinue":"    Stop-Service -Name $n -Force -ErrorAction SilentlyContinue\n    Set-Service -Name $n -StartupType Disabled"}\n    \"✓ $n : ${on?'Manual':'Disabled'}\"\n  }catch{\"✗ $n : $($_.Exception.Message)\"}\n}`;
+const scriptOf=p=>p.services?.length?svcScript(p.services,false):p.script;
+const revertOf=p=>p.services?.length?svcScript(p.services,true):p.revert;
+let presets=store.get('presets',null)||structuredClone(DEFAULTS);
+// нові вбудовані пресети з оновлень додаються до вже збережених
+DEFAULTS.forEach(d=>{if(!presets.some(p=>p.id===d.id))presets.push(structuredClone(d))});
+const save=()=>store.set('presets',presets);
+const score=p=>p.stars*2+Math.log2(1+p.uses);
+let cat='Всі';
+function renderPresets(){
+ const q=$('#search').value.toLowerCase(),cats=['Всі',...new Set(presets.map(p=>p.cat||'Мої'))];
+ $('#cats').innerHTML=cats.map(c=>`<button style="${c===cat?'border-color:var(--acc);color:var(--acc)':''}">${esc(c)}</button>`).join('');
+ const list=[...presets].sort((a,b)=>score(b)-score(a)).filter(p=>(cat==='Всі'||(p.cat||'Мої')===cat)&&(p.name+p.desc+(p.services||[]).join()).toLowerCase().includes(q));
+ $('#presetGrid').innerHTML=list.map(p=>`<div class="card preset" data-id="${p.id}">
+  <div class="row"><span class="emo">${esc(p.emoji)}</span><div class="sp"></div><span class="rank">#${[...presets].sort((a,b)=>score(b)-score(a)).indexOf(p)+1}</span><span class="pill ${p.risk}">${esc(p.cat||'Мої')}</span></div>
+  <h3 style="margin:8px 0 4px">${esc(p.name)}</h3><p class="mute" style="margin:0 0 8px;min-height:38px">${esc(p.desc)}</p>
+  ${p.services?.length?`<div class="mute" style="font-family:Consolas,monospace;font-size:11.5px;margin-bottom:8px">${p.services.map(esc).join(' · ')}</div>`:''}
+  <div class="row" style="margin-bottom:10px"><span class="stars" data-act="star">${[1,2,3,4,5].map(i=>i<=p.stars?`<span data-v="${i}">★</span>`:`<s data-v="${i}">★</s>`).join('')}</span><span class="mute">· запусків: ${p.uses}</span></div>
+  <div class="row"><button class="btn p s" data-act="apply">▶ Застосувати</button>${revertOf(p)?'<button class="btn s" data-act="revert">↩ Відкат</button>':''}${p.services?.length?'<button class="btn s" data-act="status">👀</button>':''}
+   <div class="sp"></div><button class="btn s" data-act="edit" title="Редагувати">✏️</button><button class="btn s" data-act="exp" title="Експорт">📤</button><button class="btn s" data-act="del" title="Видалити">🗑</button></div></div>`).join('')||'<p class="mute">Нічого не знайдено 🙈</p>';
+}
+$('#search').oninput=renderPresets;
+$('#cats').onclick=e=>{if(e.target.tagName==='BUTTON'){cat=e.target.textContent;renderPresets()}};
+$('#presetGrid').onclick=async e=>{
+ const el=e.target.closest('[data-act]'),card=e.target.closest('.preset');if(!el||!card)return;
+ const p=presets.find(x=>x.id===card.dataset.id),act=el.dataset.act;
+ if(act==='star'){const v=+e.target.dataset.v;if(v){p.stars=p.stars===v?0:v;save();renderPresets()}}
+ if(act==='apply'||act==='revert'){const s=act==='apply'?scriptOf(p):revertOf(p);
+  const m=modal(`<h3>${esc(p.emoji)} ${act==='apply'?'Застосувати':'Відкотити'}: ${esc(p.name)}</h3>${p.services?.length&&!S?.isAdmin?'<p style="color:var(--warn)">⚠️ Без прав адміністратора зміна служб не спрацює — запустіть start.cmd.</p>':''}<pre>${esc(s)}</pre><div class="row" style="margin-top:12px"><div class="sp"></div><button class="btn" id="mNo">Скасувати</button><button class="btn p" id="mYes">▶ Виконати</button></div>`);
+  m.querySelector('#mNo').onclick=closeModal;
+  m.querySelector('#mYes').onclick=async()=>{const b=m.querySelector('#mYes');b.disabled=true;b.textContent='⏳…';
+   try{const r=await exec(s,{src:'preset',name:(act==='revert'?'↩ ':'')+p.name});if(act==='apply'){p.uses++;save();renderPresets()}
+    m.querySelector('.card').innerHTML=`<h3>${r.exitCode===0?'✅ Готово':'⚠️ Завершено з кодом '+r.exitCode}</h3><pre>${esc(r.output||'(без виводу)')}</pre><div class="row" style="margin-top:12px"><div class="sp"></div><button class="btn p" onclick="closeModal()">Ок</button></div>`}
+   catch(err){toast(err.message);closeModal()}}}
+ if(act==='status'){const r=await api('/api/services',{names:p.services});
+  modal(`<h3>👀 ${esc(p.name)} — стан служб</h3><table>${r.items.map(s=>`<tr><td><b>${esc(s.n)}</b> <span class="mute">${esc(s.d)}</span></td><td><span class="pill ${s.status}">${s.status}</span> ${esc(s.start)}</td></tr>`).join('')}</table><div class="row" style="margin-top:12px"><div class="sp"></div><button class="btn p" onclick="closeModal()">Ок</button></div>`)}
+ if(act==='edit')editPreset(p);
+ if(act==='exp')download(`preset-${p.id}.json`,[p]);
+ if(act==='del'&&confirm(`Видалити «${p.name}»?`)){presets=presets.filter(x=>x!==p);save();renderPresets()}
+};
+function editPreset(p){
+ const isNew=!presets.includes(p);
+ const m=modal(`<h3>${isNew?'＋ Новий пресет':'✏️ Редагувати'}</h3>
+  <div class="row"><div style="width:70px"><label>Емодзі</label><input id="fE" value="${esc(p.emoji||'⭐')}"></div><div class="sp"><label>Назва</label><input id="fN" value="${esc(p.name||'')}"></div></div>
+  <div class="row"><div class="sp"><label>Категорія</label><input id="fC" value="${esc(p.cat||'Мої')}"></div><div style="width:160px"><label>Ризик</label><select id="fR">${['low','medium','high'].map(r=>`<option ${p.risk===r?'selected':''}>${r}</option>`).join('')}</select></div></div>
+  <label>Опис</label><input id="fD" value="${esc(p.desc||'')}">
+  <label>Служби для вимкнення (через кому) — або залиште порожнім і впишіть скрипт</label><input id="fS" value="${esc((p.services||[]).join(', '))}" placeholder="DiagTrack, WSearch">
+  <label>PowerShell-скрипт</label><textarea class="code" id="fP" rows="6">${esc(p.script||'')}</textarea>
+  <label>Скрипт відкату</label><textarea class="code" id="fV" rows="3">${esc(p.revert||'')}</textarea>
+  <div class="row" style="margin-top:14px"><div class="sp"></div><button class="btn" id="mNo">Скасувати</button><button class="btn p" id="mOk">Зберегти</button></div>`);
+ m.querySelector('#mNo').onclick=closeModal;
+ m.querySelector('#mOk').onclick=()=>{const v=id=>m.querySelector(id).value.trim();
+  const services=v('#fS').split(',').map(s=>s.trim()).filter(Boolean);
+  if(!v('#fN')||(!services.length&&!v('#fP')))return toast('Потрібні назва та служби або скрипт');
+  Object.assign(p,{emoji:v('#fE'),name:v('#fN'),cat:v('#fC')||'Мої',risk:v('#fR'),desc:v('#fD'),services,script:v('#fP'),revert:v('#fV')});
+  if(isNew){p.id=p.id||'p'+Date.now().toString(36);p.stars=p.stars||0;p.uses=0;presets.push(p)}
+  save();renderPresets();closeModal();toast('💾 Збережено')};
+}
+function download(name,data){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify({windash:1,presets:data},null,2)],{type:'application/json'}));a.download=name;a.click();URL.revokeObjectURL(a.href)}
+$('#newPreset').onclick=()=>editPreset({});
+$('#exportBtn').onclick=()=>download(`windash-presets-${new Date().toISOString().slice(0,10)}.json`,presets);
+$('#importBtn').onclick=()=>$('#importFile').click();
+$('#importFile').onchange=async e=>{const f=e.target.files[0];if(!f)return;
+ try{const j=JSON.parse(await f.text()),arr=Array.isArray(j)?j:j.presets;let n=0;
+  for(const raw of arr){if(!raw.name||!(raw.services?.length||raw.script))continue;
+   const p={emoji:'📦',cat:'Імпорт',risk:'medium',desc:'',stars:0,uses:0,...raw,builtin:false,id:raw.id||'i'+Math.random().toString(36).slice(2)};
+   const i=presets.findIndex(x=>x.id===p.id);i>=0?presets[i]=p:presets.push(p);n++}
+  save();renderPresets();toast(`📥 Імпортовано: ${n}`)}catch(err){toast('Невірний файл: '+err.message)}e.target.value=''};
+$('#resetPresets').onclick=()=>{if(confirm('Скинути всі пресети до стандартних?')){presets=structuredClone(DEFAULTS);save();renderPresets();toast('Скинуто')}};
+renderPresets();
+
+/* ---------- налаштування ---------- */
+const TRIG={tCpu:'cpu',tRam:'ram',tDisk:'disk',tEvt:'evt',tCd:'cooldown'};
+async function loadCfg(){try{const c=await api('/api/config');$('#model').value=c.model;$('#keyState').textContent=c.hasKey?'· ✅ збережено':'· ❌ не задано';for(const[el,k]of Object.entries(TRIG))$('#'+el).value=c[k];
+ $('#sRollback').checked=!!c.autoRollback;$('#sRestore').checked=!!c.autoRestore;$('#sConfirm').value=c.confirmSec;$('#sNotify').checked=!!c.notify;$('#sDrv').value=c.drvAuto;
+ $('#sAutostart').checked=(await api('/api/autostart')).on}catch{}}
+$('#saveTrig').onclick=async()=>{const b={};for(const[el,k]of Object.entries(TRIG))b[k]=+$('#'+el).value;await api('/api/config',b);toast('🚨 Тригери збережено')};
+
+/* ---------- інциденти й аналітика ---------- */
+const INC={cpu:'🔥 Процесор',ram:'🧮 Памʼять',disk:'💽 Диск',evt:'📕 Журнал подій',drv:'🧩 Драйвери',run:'⚠️ Збій скрипта',rollback:'↩ Відкат',svc:'🧯 Системні служби'};
+const incType=id=>INC[id]||INC[String(id).split('-')[0]]||id;
+const LV={crit:'🔴',warn:'🟡',info:'⚪'};
+let unseen=store.get('unseen',0),A=null;
+function setBadge(){$('#incBadge').textContent=unseen;$('#incBadge').classList.toggle('hidden',!unseen)}
+function onIncidents(list){if(!list?.length)return;list.forEach(i=>toast(`${LV[i.level]||''} ${i.msg}`));
+ if(store.get('tab')==='analytics')tab_analytics();else{unseen+=list.length;store.set('unseen',unseen);setBadge()}}
+setBadge();
+function diagnose(i){setMode('agent');$('#prompt').value=`Спрацював тригер на моєму ПК: «${i.msg}». Дані тригера: ${JSON.stringify(i.data).slice(0,1500)}. Знайди причину (спочатку лише читання), потім запропонуй мінімальне безпечне виправлення.`;
+ document.querySelector('nav button[data-tab=ai]').click();generate()}
+function chart(lines){
+ const pts=lines.map(l=>l.split(',')).filter(p=>p.length===3);
+ if(pts.length<2)return'<p class="mute">Метрики пишуться раз на хвилину, поки відкрита панель. Даних поки замало.</p>';
+ const W=600,H=140,x=i=>(i/(pts.length-1)*W).toFixed(1),y=v=>(H-v/100*(H-10)-5).toFixed(1);
+ const line=(k,c)=>`<polyline fill="none" stroke="${c}" stroke-width="2" vector-effect="non-scaling-stroke" points="${pts.map((p,i)=>x(i)+','+y(+p[k])).join(' ')}"/>`;
+ return`<svg class="chart" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none"><line x1="0" x2="${W}" y1="${y(50)}" y2="${y(50)}" stroke="var(--line)" stroke-dasharray="4"/>${line(1,'var(--acc)')}${line(2,'var(--acc2)')}</svg>
+  <div class="row mute"><span>${pts[0][0]}</span><div class="sp"></div><span>${pts.at(-1)[0]}</span></div>`}
+async function tab_analytics(){unseen=0;store.set('unseen',0);setBadge();
+ try{A=await api('/api/analytics')}catch(e){return toast(e.message)}
+ const now=Date.now(),inc=A.incidents,runs=A.runs,ago=(t,h)=>now-new Date(t)<h*3600e3;
+ const ok=runs.filter(r=>r.exit===0).length,avg=runs.length?runs.reduce((s,r)=>s+r.ms,0)/runs.length/1000:0;
+ const tile=(v,t)=>`<div class="card"><div class="big">${v}</div><div class="mute">${t}</div></div>`;
+ $('#anKpi').innerHTML=tile(inc.filter(i=>ago(i.at,24)).length,'інцидентів за 24 год')+tile(inc.filter(i=>ago(i.at,168)).length,'інцидентів за 7 днів')+tile(runs.length,'запусків скриптів')+tile(runs.length?Math.round(ok/runs.length*100)+'%':'—','успішних запусків')+tile(avg.toFixed(1)+' с','середній час запуску');
+ $('#anChart').innerHTML=chart(A.metrics);
+ const by={};inc.forEach(i=>{const t=incType(i.id);by[t]=(by[t]||0)+1});const mx=Math.max(1,...Object.values(by));
+ $('#anTypes').innerHTML=Object.entries(by).sort((a,b)=>b[1]-a[1]).map(([t,n])=>`<div class="row"><span>${t}</span><div class="sp"></div><b>${n}</b></div><div class="bar"><i style="width:${n/mx*100}%"></i></div>`).join('')||'<p class="mute">Жодного інциденту 🎉</p>';
+ $('#anFeed').innerHTML=[...inc].reverse().slice(0,60).map((i,k)=>`<div class="inc"><span>${LV[i.level]||'⚪'}</span><div style="flex:1;min-width:0"><b class="lv-${i.level}">${esc(i.msg)}</b><div class="mute">${incType(i.id)} · ${new Date(i.at).toLocaleString('uk')}</div>
+   <details><summary class="mute">деталі</summary><pre>${esc(JSON.stringify(i.data,null,1))}</pre></details></div><button class="btn s" data-k="${k}">🩺 AI</button></div>`).join('')||'<p class="mute">Порожньо — система почувається добре 😺</p>';
+ const rs={};runs.forEach(r=>{const k=r.name||r.line;rs[k]??={n:0,f:0};rs[k].n++;if(r.exit!==0)rs[k].f++});
+ $('#anRuns').innerHTML=runs.length?`<table>${Object.entries(rs).sort((a,b)=>b[1].n-a[1].n).slice(0,15).map(([k,v])=>`<tr><td>${esc(k)}</td><td>${v.n}×${v.f?` · <span class="lv-crit">${v.f} збоїв</span>`:''}</td></tr>`).join('')}</table>`:'<p class="mute">Ще нічого не запускалось</p>';
+ try{const sn=await api('/api/snapshots');
+  $('#anSnaps').innerHTML=sn.items.length?`<table>${sn.items.slice(0,15).map(s=>`<tr><td>${esc(s.name)}<div class="mute">${new Date(s.at).toLocaleString('uk')} · ${[s.svc&&'служб '+s.svc,s.reg&&'реєстр '+s.reg,s.drv&&'драйверів '+s.drv].filter(Boolean).join(' · ')}</div></td><td>${s.rolledBack?'<span class="mute">↩ відкочено</span>':s.pending?'<span class="lv-warn">⏳ очікує</span>':`<button class="btn s" data-snap="${s.id}" title="Відкотити">↩</button>`}</td></tr>`).join('')}</table>`
+   :'<p class="mute">Знімків ще немає — вони створюються перед скриптами, що змінюють служби, реєстр або драйвери.</p>'}catch{}}
+$('#anFeed').onclick=e=>{const k=e.target.dataset.k;if(k!=null)diagnose([...A.incidents].reverse()[k])};
+$('#anRefresh').onclick=tab_analytics;
+$('#anExport').onclick=()=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(A,null,2)],{type:'application/json'}));a.download=`windash-logs-${new Date().toISOString().slice(0,10)}.json`;a.click()};
+$('#anClear').onclick=async()=>{if(confirm('Видалити всі логи й метрики?')){await api('/api/clearlogs',{});tab_analytics()}};
+
+/* ---------- драйвери ---------- */
+const CM={1:'не налаштовано',3:'пошкоджений драйвер',10:'не запускається',12:'конфлікт ресурсів',14:'потрібне перезавантаження',18:'перевстановіть драйвер',19:'проблема реєстру',21:'видаляється',22:'вимкнено',24:'немає/не підключено',28:'драйвер не встановлено',31:'не працює коректно',39:'драйвер пошкоджений або відсутній',43:'пристрій повідомив про збій',45:'не підключено',52:'драйвер без підпису'};
+const DRV={
+ backup:{t:'💾 Бекап усіх драйверів на робочий стіл',s:`$dst="$env:USERPROFILE\\Desktop\\DriversBackup-$(Get-Date -f yyyyMMdd)"
+$n=@(Export-WindowsDriver -Online -Destination $dst).Count
+"✅ Збережено $n драйверів у $dst"`},
+ rescan:{t:'🔄 Пересканувати обладнання',s:'pnputil /scan-devices'},
+ restore:{t:'🛟 Створити точку відновлення',s:`Checkpoint-Computer -Description 'WinDash: вручну' -RestorePointType MODIFY_SETTINGS
+'✅ Готово'`},
+};
+$('#drvActions').innerHTML=Object.entries(DRV).map(([k,a])=>`<button class="btn ${a.risk?'p':''}" data-k="${k}" style="text-align:left">${a.t}</button>`).join('');
+function confirmRun(title,s,name,timeout=900){
+ const m=modal(`<h3>${esc(title)}</h3>${!S?.isAdmin?'<p style="color:var(--warn)">⚠️ Потрібні права адміністратора — запустіть start.cmd.</p>':''}<pre>${esc(s)}</pre><div class="row" style="margin-top:12px"><div class="sp"></div><button class="btn" id="mNo">Скасувати</button><button class="btn p" id="mYes">▶ Виконати</button></div>`);
+ m.querySelector('#mNo').onclick=closeModal;
+ m.querySelector('#mYes').onclick=async()=>{const b=m.querySelector('#mYes');b.disabled=true;b.textContent='⏳ Може тривати кілька хвилин…';
+  try{const r=await exec(s,{src:'driver',name,timeout});
+   m.querySelector('.card').innerHTML=`<h3>${r.exitCode===0?'✅ Готово':'⚠️ Код '+r.exitCode}</h3><pre>${esc(r.output||'(без виводу)')}</pre><div class="row" style="margin-top:12px"><div class="sp"></div><button class="btn p" onclick="closeModal()">Ок</button></div>`}
+  catch(err){toast(err.message);closeModal()}}}
+$('#drvActions').onclick=e=>{const a=DRV[e.target.dataset.k];if(a)confirmRun(a.t,a.s,a.t)};
+$('#drvFolder').onclick=()=>{const p=$('#drvPath').value.trim().replace(/[\\/]+$/,'');if(!p)return toast('Вкажіть папку з драйверами');
+ confirmRun('📂 Встановити з папки',`Checkpoint-Computer -Description 'WinDash: драйвер з папки' -RestorePointType MODIFY_SETTINGS -ErrorAction SilentlyContinue\npnputil /add-driver '${p.replace(/'/g,"''")}\\*.inf' /subdirs /install`,'з папки '+p)};
+let D=null;
+function renderDrivers(){if(!D)return;
+ const q=$('#drvSearch').value.toLowerCase(),cut=new Date(Date.now()-3*365*864e5).toISOString().slice(0,10);
+ const list=D.drivers.filter(d=>(!$('#drvOld').checked||d.date&&d.date<cut)&&(d.n+d.mf+d.cls).toLowerCase().includes(q)).sort((a,b)=>(a.date||'').localeCompare(b.date||''));
+ $('#drvCount').textContent=`· ${list.length} з ${D.drivers.length}`;
+ $('#drvTable').innerHTML=list.map(d=>`<tr class="${d.date&&d.date<cut?'old':''}"><td>${esc(d.n)}<div class="mute">${esc(d.mf)} · ${esc(d.cls)} · ${esc(d.inf)}</div></td><td>${esc(d.v)}<br>${d.date}</td></tr>`).join('')}
+/* Джерела виробника за Vendor ID — для того, чого немає ні у WU, ні в каталозі */
+const VENDORS={'8086':['Intel DSA','https://www.intel.com/content/www/us/en/support/detect.html'],'8087':['Intel DSA','https://www.intel.com/content/www/us/en/support/detect.html'],
+ '1022':['AMD','https://www.amd.com/en/support/download/drivers.html'],'1002':['AMD Radeon','https://www.amd.com/en/support/download/drivers.html'],
+ '10DE':['NVIDIA','https://www.nvidia.com/en-us/drivers/'],'10EC':['Realtek','https://www.realtek.com/Download/Overview'],'0BDA':['Realtek','https://www.realtek.com/Download/Overview'],
+ '14E4':['Broadcom','https://www.broadcom.com/support/download-search'],'168C':['Qualcomm Atheros','https://www.qualcomm.com/support'],'17CB':['Qualcomm','https://www.qualcomm.com/support'],
+ '1B21':['ASMedia','https://www.asmedia.com.tw/'],'1912':['Renesas USB','https://www.renesas.com/'],'1106':['VIA','https://www.via.com.tw/'],'197B':['JMicron','https://www.jmicron.com/']};
+const ven=hw=>{const m=String(hw).match(/(?:VEN|VID)_([0-9A-F]{4})/i);return m&&m[1].toUpperCase()};
+const short=hw=>String(hw||'').replace(/(&SUBSYS.*|&REV.*|&CC.*)$/i,'');
+const vendorLink=hw=>{const v=VENDORS[ven(hw)];return v?`<a href="${v[1]}" target="_blank" rel="noopener">${v[0]} ↗</a>`:''};
+const catLink=hw=>`<a href="https://www.catalog.update.microsoft.com/Search.aspx?q=${encodeURIComponent(short(hw))}" target="_blank" rel="noopener">каталог ↗</a>`;
+const tile=(v,t)=>`<div class="card"><div class="big">${v}</div><div class="mute">${t}</div></div>`;
+function groupDev(list){const g={};list.forEach(p=>{const k=(p.n||p.id)+'|'+p.code+'|'+ven(p.hw);(g[k]??={...p,count:0,hws:[]}).count++;g[k].hws.push(short(p.hw))});return Object.values(g).sort((a,b)=>b.count-a.count)}
+
+function renderDrvResult(t){
+ const r=t.result;if(!r){$('#drvResult').innerHTML=`<p class="lv-crit">Задача завершилась без результату (код ${t.exit}) — дивіться журнал вище.</p>`;return}
+ const RC={ok:'✅',fail:'❌',found:'📦',none:'∅',partial:'⚠️',aborted:'⛔'};
+ const rows=[...(r.installed||[]).map(x=>({src:'Windows Update',t:x.t,rc:x.rc})),...(r.mode!=='install'?(r.found||[]).map(x=>({src:'Windows Update',t:x.t,rc:'found'})):[]),
+  ...(r.catalog||[]).filter(x=>x.rc!=='dup').map(x=>({src:'Catalog',t:x.t||x.n,hw:x.hw,rc:x.rc,err:x.err,date:x.date}))];
+ // китайські/OEM-плати часто віддають заглушки замість виробника
+ const junk=/to be filled by o\.?e\.?m\.?|default string|system manufacturer|system product name|not applicable|^o\.?e\.?m\.?$/ig;
+ const prob=groupDev(r.problems||[]),board=S?`${S.maker} ${S.board}`.replace(junk,'').replace(/\s+/g,' ').trim():'';
+ $('#drvResult').innerHTML=`<div class="kpi">${tile(r.problemsBefore+' → '+(r.problems||[]).length,'пристроїв із проблемами')}${tile(rows.filter(x=>x.rc==='ok').length,'встановлено')}${tile(rows.filter(x=>x.rc==='found').length,'знайдено, не встановлено')}${tile(r.reboot?'потрібне':'ні','перезавантаження')}</div>
+  ${r.snap?`<div class="row" style="margin-bottom:10px"><span class="mute">📸 Знімок ${r.snap}: нові драйвери можна прибрати одним кліком.</span><div class="sp"></div><button class="btn s" data-snap="${r.snap}">↩ Відкотити драйвери</button></div>`:''}
+  ${rows.length?`<table>${rows.map(x=>`<tr><td>${RC[x.rc]||''} ${esc(x.t)}${x.hw?`<div class="mute">${esc(x.hw)}${x.date?' · '+x.date:''}${x.err?' · '+esc(x.err):''}</div>`:''}</td><td>${x.src}</td></tr>`).join('')}</table>`:''}
+  ${prob.length?`<h3 style="margin-top:16px">🧭 Лишились без драйвера — куди йти далі</h3><table>${prob.map(p=>`<tr><td>${esc(p.n||'?')} ${p.count>1?`<span class="pill">×${p.count}</span>`:''}<div class="mute">${esc(p.hws.slice(0,3).join(', '))}${p.hws.length>3?' …':''}</div></td><td>${vendorLink(p.hw)} ${catLink(p.hw)}</td></tr>`).join('')}</table>
+   ${board?`<p class="mute">Для чипсета й вбудованих пристроїв також: <a target="_blank" rel="noopener" href="https://www.google.com/search?q=${encodeURIComponent(board+' drivers download')}">драйвери плати ${esc(board)} ↗</a></p>`:''}`:'<p>✅ Усі пристрої мають драйвери</p>'}`}
+
+let drvPoll;
+async function pollDrv(id){clearTimeout(drvPoll);$('#drvTask').classList.remove('hidden');
+ try{const t=await api('/api/task',{id});
+  $('#drvTaskName').textContent=(t.done?(t.exit===0?'✅ ':'⚠️ '):'⏳ ')+t.name;$('#drvTaskTime').textContent=`${Math.floor(t.sec/60)} хв ${t.sec%60} с`;
+  const o=$('#drvTaskOut');o.textContent=t.output||'Запуск…';o.scrollTop=o.scrollHeight;
+  ['#drvAutoInstall','#drvAutoScan'].forEach(s=>$(s).disabled=!t.done);
+  if(t.done){renderDrvResult(t);loadDrivers(true)}else drvPoll=setTimeout(()=>pollDrv(id),1500)}
+ catch(e){toast(e.message)}}
+async function drvAuto(mode){
+ if(!S?.isAdmin)return toast('Потрібні права адміністратора — запустіть start.cmd');
+ if(mode==='install'&&!confirm('Знайти й встановити драйвери з Windows Update і Microsoft Update Catalog?\n\nПеред встановленням: точка відновлення + знімок для відкату.'))return;
+ try{$('#drvResult').innerHTML='';const r=await api('/api/drivers/auto',{mode});pollDrv(r.id)}catch(e){toast(e.message)}}
+$('#drvAutoInstall').onclick=()=>drvAuto('install');$('#drvAutoScan').onclick=()=>drvAuto('scan');
+
+async function loadDrivers(quiet){const b=$('#drvScan');b.disabled=true;b.textContent='⏳ Сканую…';
+ try{D=await api('/api/drivers');
+  $('#drvLast').textContent=D.lastCheck&&!D.lastCheck.startsWith('2000')?'остання перевірка: '+new Date(D.lastCheck).toLocaleString('uk'):'';
+  if(!quiet&&D.task){if(!D.task.done)pollDrv(D.task.id);else{$('#drvTask').classList.remove('hidden');$('#drvTaskName').textContent=D.task.name;$('#drvTaskOut').textContent=D.task.output;renderDrvResult(D.task)}}
+  const g=groupDev(D.problems);
+  $('#drvProblems').innerHTML=D.problems.length?g.map(p=>`<div class="inc"><span>${p.code===22?'⚪':'🔴'}</span><div style="flex:1;min-width:0"><b>${esc(p.n||p.id)}</b>${p.count>1?` <span class="pill">×${p.count}</span>`:''}<div class="mute">код ${p.code}: ${CM[p.code]||'невідомо'} · ${vendorLink(p.hw)||esc(ven(p.hw)||'—')}</div></div></div>`).join('')+
+   `<button class="btn s" id="drvAi" style="margin-top:10px">🤖 Агент: розібратися з цими пристроями</button>`:'<p>✅ Усі пристрої працюють нормально</p>';
+  $('#drvAi')?.addEventListener('click',()=>{setMode('agent');$('#prompt').value=`Розберись із пристроями без драйвера на моєму ПК (${S?.os}; плата ${S?.maker} ${S?.board}; ${S?.cpu}). Список: ${JSON.stringify(g.slice(0,12).map(p=>({n:p.n,code:p.code,hw:p.hws.slice(0,4)})))}. Визнач за Hardware ID, що це за пристрої, чи вони критичні і який офіційний пакет драйверів їх закриває. Спочатку діагностика без змін.`;document.querySelector('nav button[data-tab=ai]').click();generate()});
+  renderDrivers()}catch(e){toast(e.message)}finally{b.disabled=false;b.textContent='🔄 Оновити список'}}
+async function tab_drivers(){if(!D)loadDrivers()}
+$('#drvScan').onclick=()=>loadDrivers();
+$('#drvSearch').oninput=renderDrivers;$('#drvOld').onchange=renderDrivers;
+document.querySelector(`nav button[data-tab="${store.get('tab','dash')}"]`)?.click();
+$('#saveCfg').onclick=async()=>{await api('/api/config',{apiKey:$('#apiKey').value.trim(),model:$('#model').value});$('#apiKey').value='';loadCfg();toast('💾 Збережено')};
+$('#saveSafety').onclick=async()=>{await api('/api/config',{autoRollback:+$('#sRollback').checked,autoRestore:+$('#sRestore').checked,confirmSec:+$('#sConfirm').value});toast('🛡 Збережено')};
+$('#saveBg').onclick=async()=>{try{await api('/api/config',{notify:+$('#sNotify').checked,drvAuto:+$('#sDrv').value});
+ const want=$('#sAutostart').checked,r=await api('/api/autostart');if(r.on!==want)await api('/api/autostart',{on:want});toast('🌙 Збережено')}catch(e){toast(e.message);loadCfg()}};
+loadCfg();
+</script>
+</body>
+</html>
